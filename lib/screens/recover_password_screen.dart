@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:medialert/screens/components/custom_body.dart';
+import 'package:medialert/screens/components/custom_button.dart';
+import 'package:medialert/screens/components/input_text.dart';
 
 // Change to StatefulWidget and connect to its state
 class RecoverPasswordScreen extends StatefulWidget {
@@ -32,11 +35,9 @@ class RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Recuperar Contraseña'),
-      ),
-      body: Padding(
+    return CustomBody(
+      appBarTittle: 'Recuperar Contraseña',
+      child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -46,18 +47,9 @@ class RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
               style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Usuario',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            InputText(controller: _usernameController, labelText: 'Usuario'),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _recoverPassword,
-              child: const Text('Recuperar'),
-            ),
+            CustomButton(text: 'Recuperar', onPressed: _recoverPassword),
             const SizedBox(height: 20),
             if (_message.isNotEmpty)
               Text(

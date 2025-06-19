@@ -1,7 +1,9 @@
 // login screen
 import 'package:flutter/material.dart';
+import 'package:medialert/screens/components/custom_body.dart';
 import 'package:medialert/screens/components/custom_button.dart';
 import 'package:medialert/screens/components/input_text.dart';
+import 'package:medialert/services/user_storage_service.dart'; // <--- Importa tu UserStorageService
 import 'main_screen.dart';
 import 'register_screen.dart';
 import 'package:medialert/screens/recover_password_screen.dart';
@@ -15,51 +17,64 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _usernameController = TextEditingController();
+  // GlobalKey para el formulario, necesario para la validación
+  final _formKey = GlobalKey<FormState>();
+
+  // Controladores para los campos de texto
+  final TextEditingController _emailController = TextEditingController(); // Cambiado a email
   final TextEditingController _passwordController = TextEditingController();
 
-  String? error;
+  // Instancia de tu servicio de almacenamiento de usuarios
+  final UserStorageService _userStorageService = UserStorageService();
 
-  void _login() {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+  // Función asíncrona para manejar el inicio de sesión
+  Future<void> _login() async {
+    // Validar el formulario antes de intentar iniciar sesión
+    if (_formKey.currentState!.validate()) {
+      final String email = _emailController.text.trim();
+      final String password = _passwordController.text;
 
-    if (username == 'usuario' && password == '1234') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const MainScreen(username: 'usuario'),
-        ),
-      );
-    } else {
-      setState(() {
-        error = 'Usuario o contraseña incorrectos.';
-      });
+      // Intentar autenticar al usuario usando el servicio
+      final user = await _userStorageService.authenticateUser(email, password);
+
+      if (user != null) {
+        // Autenticación exitosa
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Inicio de sesión exitoso!')),
+        );
+        // Navegar a la pantalla principal (MainScreen)
+        // Puedes pasar el objeto 'user' completo si MainScreen lo necesita
+        Navigator.pushReplacement( // Usar pushReplacement para no permitir volver a la pantalla de login
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainScreen(username: user.email), // Pasamos el email como "username" temporalmente
+          ),
+        );
+      } else {
+        // Autenticación fallida
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Correo o contraseña incorrectos.')),
+        );
+      }
     }
   }
 
   @override
+  void dispose() {
+    // Limpiar los controladores cuando el widget se destruye
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        // Este Container contendrá el degradado y se expandirá para cubrir la pantalla
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color.fromARGB(255, 255, 255, 255),
-              Color.fromARGB(237, 237, 237, 237),
-              Color.fromARGB(255, 175, 175, 175),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+    return CustomBody(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Form( // <--- Envuelve tu contenido con Form
+            key: _formKey, // <--- Asigna el GlobalKey al Form
             child: ListView(
               shrinkWrap: true,
               children: [
@@ -75,40 +90,46 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                if (error != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    error!,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+
                 InputText(
-                  controller: _usernameController,
-                  labelText: 'Usuario',
+                  controller: _emailController, // <--- Cambiado a _emailController
+                  labelText: 'Correo electrónico', // <--- Cambiado el label
+                  keyboardType: TextInputType.emailAddress, // <--- Teclado para email
+                  validator: (value) { // <--- Agregando el validador
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor ingresa tu correo electrónico';
+                    }
+                    if (!value.contains('@') || !value.contains('.')) {
+                      return 'Ingresa un correo electrónico válido';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
                 InputText(
                   controller: _passwordController,
                   labelText: 'Contraseña',
                   obscureText: true,
+                  validator: (value) { // <--- Agregando el validador
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor ingresa tu contraseña';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const RecoverPasswordScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const RecoverPasswordScreen()),
                     );
                   },
                   child: const Text('¿Olvidaste tu contraseña?'),
                 ),
                 const SizedBox(height: 20),
-                CustomButton(text: 'Iniciar sesión', onPressed: _login),
+                CustomButton(text: 'Iniciar sesión', onPressed: _login), // Llama a la función _login actualizada
                 const SizedBox(height: 20),
-
                 CustomButton(
                   text: 'Crear Usuario',
                   onPressed: () {
@@ -118,19 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                   isSecondary: true,
-                ),
-
-                ElevatedButton(
-                  onPressed: () {
-                    String usuario = _usernameController.text;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MainScreen(username: usuario),
-                      ),
-                    );
-                  },
-                  child: const Text('Ingresar'),
                 ),
               ],
             ),

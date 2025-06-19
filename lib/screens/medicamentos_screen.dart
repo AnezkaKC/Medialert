@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
+class MedicamentosScreen extends StatelessWidget {
+  const MedicamentosScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,12 +14,12 @@ class HistoryScreen extends StatelessWidget {
               height: 32,
             ),
             const SizedBox(width: 8),
-            const Text('Historial'),
+            const Text('Medicamentos'),
           ],
         ),
       ),
       body: const Center(
-        child: Text('Aquí se mostrará el historial.'),
+        child: Text('Contenido de medicamentos'),
       ),
     );
   }
